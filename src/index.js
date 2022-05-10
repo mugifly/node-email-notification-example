@@ -1,5 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const fetch = require("node-fetch");
 
 // .env ファイルを読み込む
 require("dotenv").config();
@@ -13,23 +14,26 @@ const app = express();
 app.use(bodyParser.json());
 app.use(express.static("public"));
 
-// ルートを定義 - GET /
-app.get("/", async (req, res) => {
-  res.send("notification-test");
-});
-
 // ルートを定義 - GET /notifications
 app.get("/notifications", async (req, res) => {
   if (process.env.NODE_ENV && process.env.NODE_ENV === "production") {
-    return res.status(403);
+    return res.status(403).send([]);
   }
 
   const notifications = await Notification.findAll();
   res.send(notifications);
 });
 
-// ルートを定義 - PpubliOST /notifications
+// ルートを定義 - GET /recaptchaSiteKey
+app.get("/recaptchaSiteKey", async (req, res) => {
+  res.send({
+    reCaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY,
+  });
+});
+
+// ルートを定義 - POST /notifications
 app.post("/notifications", async (req, res) => {
+  // 送信された内容を検証
   if (!req.body || !req.body.email || !req.body.notifiedAt) {
     return res.status(400).send("入力内容が正しくありません");
   } else if (
@@ -40,6 +44,36 @@ app.post("/notifications", async (req, res) => {
     return res.status(400).send("メールアドレスの形式が正しくありません");
   }
 
+  // reCAPTCHA v2 認証の正当性を検証
+  if (process.env.NODE_ENV && process.env.NODE_ENV === "production") {
+    if (!req.body.reCaptchaResponseToken) {
+      return res.status(400).send("reCAPTCHA v2 認証が行われていません");
+    } else if (
+      !process.env.RECAPTCHA_SITE_KEY ||
+      !process.env.RECAPTCHA_SECRET_KEY
+    ) {
+      return res
+        .status(500)
+        .send(
+          "環境変数に RECAPTCHA_SITE_KEY または RECAPTCHA_SECRET_KEY が登録されていません"
+        );
+    }
+
+    const verifyResponse = await fetch(
+      `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${req.body.reCaptchaResponseToken}`
+    );
+
+    const verifyResult = await verifyResponse.json();
+    console.log(verifyResult);
+    if (!verifyResult.success) {
+      // 認証失敗ならば、エラーを返す
+      return res
+        .status(400)
+        .send("reCAPTCHA v2 認証に失敗しました。もう一度お試しください。");
+    }
+  }
+
+  // 通知をデータベースへ登録
   try {
     await Notification.create({
       email: req.body.email,
@@ -49,7 +83,7 @@ app.post("/notifications", async (req, res) => {
     });
   } catch (e) {
     if (e instanceof UniqueConstraintError) {
-      // 重複登録ならば、エラーを返すs
+      // 重複登録ならば、エラーを返す
       return res.status(400).send("すでに登録済みです");
     }
 

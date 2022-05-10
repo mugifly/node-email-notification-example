@@ -2,17 +2,23 @@
 <html>
   <head>
     <title>notification-test</title>
+    <script src="//unpkg.com/google-recaptcha-v2/index.js"></script>
     <script src="scripts.js"></script>
   </head>
   <body>
     <h1>notification-test</h1>
 
-    <h2>Register</h2>
+    <h2>登録</h2>
     <form
-      onSubmit="registerNotification(email.value, notifiedAt.value); return false;"
+      onSubmit="registerNotification(event, email.value, notifiedAt.value); return false;"
     >
       <p>Email: <input name="email" type="email" required /></p>
-      <p>Date: <input name="notifiedAt" type="datetime-local" required /></p>
+      <p>日付: <input name="notifiedAt" type="datetime-local" required /></p>
+      <p>
+        私はロボットではありません:
+        <input id="recaptchaCheckbox" type="checkbox" onClick="GoogleReCaptcha.validate(event)"><br>
+        <div id="recaptcha" class="g-recaptcha"></div>
+      </p>
       <p>
         <input type="submit" value="Register" />
       </p>
