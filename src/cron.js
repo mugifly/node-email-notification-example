@@ -100,7 +100,10 @@ class Cron {
 
     let isValid = true;
     for (const varName of REQUIRED_VARIABLES) {
-      if (process.env[varName]) {
+      if (
+        process.env[varName] &&
+        process.env[varName] != "(PLEASE FILL AFTER DEPLOYED)"
+      ) {
         continue;
       }
       console.error(`環境変数 ${varName} が未設定です`);

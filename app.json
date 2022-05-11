@@ -1,0 +1,48 @@
+{
+  "name": "node-email-notification-example",
+  "success_url": "https://github.com/mugifly/node-email-notification-example#quick-start",
+  "env": {
+    "RECAPTCHA_SITE_KEY": {
+      "description": "Site key for reCAPTCHA v2 (Invisible). You can get it from https://www.google.com/recaptcha"
+    },
+    "RECAPTCHA_SECRET_KEY": {
+      "description": "Secret key for reCAPTCHA v2 (Invisible). You can get it from https://www.google.com/recaptcha"
+    },
+    "EMAIL_FROM": {
+      "description": "Sender address of the notification email",
+      "value": "notify@example.com"
+    },
+    "EMAIL_SMTP_HOST": {
+      "description": "Host name of your SMTP server. [NOTE] If you use a popular SMTP server such as Gmail to deliver mail automatically, delivery may be blocked. Therefore, If you don't have a suitable SMTP server, I recommend that you complete deploying as it is, then configure \"Send Email (Outbound)\" on the dashboard page of \"CloudMailIn\" add-on.",
+      "value": "(PLEASE FILL AFTER DEPLOYED)"
+    },
+    "EMAIL_SMTP_PORT": {
+      "description": "Port number of your SMTP server",
+      "value": "587"
+    },
+    "EMAIL_SMTP_USERNAME": {
+      "description": "Username of your SMTP server",
+      "value": "(PLEASE FILL AFTER DEPLOYED)"
+    },
+    "EMAIL_SMTP_PASSWORD": {
+      "description": "Password of your SMTP server",
+      "value": "(PLEASE FILL AFTER DEPLOYED)"
+    }
+  },
+  "addons": [
+    "heroku-postgresql:hobby-dev",
+    "scheduler:standard",
+    "cloudmailin:developerplus"
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "free"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}
