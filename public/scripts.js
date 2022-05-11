@@ -31,7 +31,7 @@ async function registerNotification(event, email, notifiedAt) {
 }
 
 window.addEventListener("load", async () => {
-  const recaptchaSiteKeyResponse = await fetch("/recaptchaSiteKey");
+  const recaptchaSiteKeyResponse = await fetch("/recaptcha/siteKey");
   if (!recaptchaSiteKeyResponse.ok) {
     return;
   }
