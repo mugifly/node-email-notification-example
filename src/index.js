@@ -64,9 +64,9 @@ app.post("/notifications", async (req, res) => {
     );
 
     const verifyResult = await verifyResponse.json();
-    console.log(verifyResult);
     if (!verifyResult.success) {
       // 認証失敗ならば、エラーを返す
+      console.log("reCaptcha Failed", verifyResult);
       return res
         .status(400)
         .send("reCAPTCHA v2 認証に失敗しました。もう一度お試しください。");
