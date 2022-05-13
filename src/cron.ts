@@ -1,31 +1,28 @@
-const { Op } = require("sequelize");
-const nodemailer = require("nodemailer");
+import "dotenv/config";
 
-require("dotenv").config();
-
-const { sequelize, Notification } = require("./database");
+import { LessThan } from "typeorm";
+import { AppDataSource, NotificationRepository } from "./database";
+import { createTransport } from "nodemailer";
 
 class Cron {
-  static async execute() {
+  static async execute(): Promise<any> {
     if (!Cron.validateParameters()) {
       return process.exit(1);
     }
 
     // データベースの接続完了まで待機
-    await sequelize.authenticate();
+    await AppDataSource.initialize();
 
     // メールを送信するためのインスタンスを初期化
     const mailTransporter = Cron.getMailTransporter();
 
     // 送信されるべき通知を取得
-    const notifications = await Notification.findAll({
+    const notifications = await NotificationRepository.find({
       where: {
         // 未通知であること
         hasNotified: false,
         // 通知予定日時であるか、または既に過ぎていること
-        notifiedAt: {
-          [Op.lte]: Date.now(),
-        },
+        notifiedAt: LessThan(new Date()),
       },
     });
     console.log(`Found ${notifications.length} notification items`);
@@ -40,13 +37,13 @@ class Cron {
       let sendMessageResult;
       try {
         sendMessageResult = await mailTransporter.sendMail({
-          from: process.env.EMAIL_FROM,
+          from: process.env["EMAIL_FROM"],
           to: notification.email,
           subject: "Notification",
           text: "メール通知のテストです。" + (notification.message || ""),
         });
         console.log(sendMessageResult);
-      } catch (e) {
+      } catch (e: any) {
         console.error(
           "Could not send notification",
           e.toString(),
@@ -74,17 +71,17 @@ class Cron {
   }
 
   static getMailTransporter() {
-    return nodemailer.createTransport({
-      host: process.env.EMAIL_SMTP_HOST,
-      port: process.env.EMAIL_SMTP_PORT,
+    return createTransport({
+      host: process.env["EMAIL_SMTP_HOST"],
+      port: parseInt(process.env["EMAIL_SMTP_PORT"] || "587", 10),
       secure:
-        process.env.EMAIL_SMTP_SECURE &&
-        process.env.EMAIL_SMTP_SECURE.match(/true/i)
+        process.env["EMAIL_SMTP_SECURE"] &&
+        process.env["EMAIL_SMTP_SECURE"].match(/true/i)
           ? true
           : false,
       auth: {
-        user: process.env.EMAIL_SMTP_USERNAME,
-        pass: process.env.EMAIL_SMTP_PASSWORD,
+        user: process.env["EMAIL_SMTP_USERNAME"],
+        pass: process.env["EMAIL_SMTP_PASSWORD"],
       },
     });
   }
